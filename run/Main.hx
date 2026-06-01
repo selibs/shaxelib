@@ -1,7 +1,7 @@
 package;
 
 class Main {
-    public static function main() {
+	public static function main() {
         
     }
 }

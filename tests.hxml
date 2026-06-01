@@ -1,4 +1,4 @@
--L LIBRARY_NAME
+-cp src
 -cp tests
 -m Main
 
