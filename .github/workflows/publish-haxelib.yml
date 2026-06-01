@@ -1,0 +1,68 @@
+name: Publish to Haxelib
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Setup Haxe
+        uses: krdlab/setup-haxe@v2
+        with:
+          haxe-version: latest
+
+      - name: Setup Python dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pyyaml
+
+      - name: Setup Haxelib repository
+        run: |
+          mkdir -p "$RUNNER_TEMP/haxelib"
+          haxelib setup "$RUNNER_TEMP/haxelib"
+
+      - name: Prepare package directory
+        run: |
+          rm -rf package
+          mkdir package
+
+          cp -r src package/src
+          cp -r run package/run
+
+          if [ -f README.md ]; then cp README.md package/README.md; fi
+          if [ -f LICENSE ]; then cp LICENSE package/LICENSE; fi
+          if [ -f CHANGELOG.md ]; then cp CHANGELOG.md package/CHANGELOG.md; fi
+
+      - name: Generate haxelib.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 .github/scripts/generate_haxelib_json.py
+
+      - name: Show generated haxelib.json
+        run: |
+          cat package/haxelib.json
+
+      - name: Publish package
+        env:
+          HAXELIB_USER: ${{ secrets.HAXELIB_USER }}
+          HAXELIB_PASSWORD: ${{ secrets.HAXELIB_PASSWORD }}
+        run: |
+          if [ -n "$HAXELIB_USER" ]; then
+            printf "%s\n%s\n" "$HAXELIB_USER" "$HAXELIB_PASSWORD" | haxelib submit package
+          else
+            printf "%s\n" "$HAXELIB_PASSWORD" | haxelib submit package
+          fi
+          

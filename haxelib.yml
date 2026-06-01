@@ -1,0 +1,9 @@
+classPath: "src"
+main: "run.Main"
+
+contributors:
+  - "AUTHOR_NAME" # haxelib author name
+  # ...
+
+dependencies:
+  # ...

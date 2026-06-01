@@ -1,0 +1,5 @@
+-L LIBRARY_NAME
+-cp tests
+-m Main
+
+--interp

@@ -1,3 +1,7 @@
 .haxelib/
 .haxelsp/recording/
 dump/
+
+package/
+haxelib.json
+.env
