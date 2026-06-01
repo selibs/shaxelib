@@ -14,7 +14,7 @@ Minimal template for publishing a Haxe library to haxelib through GitHub Release
 ## Intended workflow
 
 1. Rename the project and set the real package name in `haxelib.yml`.
-2. Replace placeholder values such as `AUTHOR` and `LIBRARY_NAME`.
+2. Replace placeholder values such as `AUTHOR_NAME`.
 3. Add your library code under `src/`.
 4. Update tests in `tests/` so they compile against the real library.
 5. Create a GitHub Release with a semantic version tag such as `v0.1.0`.
@@ -51,9 +51,8 @@ haxe -cp . -cp src --main run.Main --interp
 
 ## Current placeholders to replace
 
-- `tests.hxml` still contains `-L LIBRARY_NAME`
-- `haxelib.yml` still contains `AUTHOR`
-- `run/Main.hx`, `src/Main.hx`, and `tests/Tests.hx` are empty stubs
+- `haxelib.yml` still contains `AUTHOR_NAME`
+- `run/Main.hx`, `src/Library.hx`, and `tests/Main.hx` are empty stubs
 
 ## Project layout
 
@@ -66,7 +65,7 @@ This directory contains the public library source that will be shipped to haxeli
 - Only files copied into `package/src` are included in the published package.
 - The runnable entry point for `haxelib run` lives separately in `run/Main.hx`.
 
-`src/Main.hx` is only a stub. Replace it with your real modules or remove it if you do not need a root source module under `src/`.
+`src/Library.hx` is only a stub. Replace it with your real modules or remove it if you do not need a root source module under `src/`.
 
 ### `run/`
 
@@ -81,9 +80,6 @@ This directory contains compile-time or runtime tests for the library.
 
 - `tests.hxml` adds `tests/` to the class path.
 - `Tests` is the default test entry point.
-- The current template expects the library to be available through `-L LIBRARY_NAME`.
-
-Before using the test template, replace `LIBRARY_NAME` in `tests.hxml` with the actual haxelib package name, or switch the test setup to direct source class paths if that fits your workflow better.
 
 Suggested usage:
 
@@ -91,7 +87,7 @@ Suggested usage:
 - regression tests for fixed bugs
 - small interpreter-based checks with `--interp`
 
-`tests/Tests.hx` is intentionally empty and should be replaced with real assertions or compile checks.
+`tests/Main.hx` is intentionally empty and should be replaced with real assertions or compile checks.
 
 ## Publish behavior
 
