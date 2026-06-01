@@ -2,13 +2,12 @@ import os
 import re
 import sys
 import json
-import yaml
 import urllib.request
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CONFIG_PATH = ROOT / "haxelib.yml"
+CONFIG_PATH = ROOT / "haxelib.json"
 OUT_PATH = ROOT / "package" / "haxelib.json"
 
 
@@ -34,20 +33,19 @@ def fail(message: str) -> None:
 
 def read_json_file(path: str | Path) -> dict:
     with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def load_yaml() -> dict:
-    if not CONFIG_PATH.exists():
-        fail("haxelib.yml not found")
-
-    with CONFIG_PATH.open("r", encoding="utf-8") as f:
-        data = yaml.safe_load(f) or {}
+        data = json.load(f)
 
     if not isinstance(data, dict):
-        fail("haxelib.yml must contain a YAML object")
+        fail(f"{Path(path).name} must contain a JSON object")
 
     return data
+
+
+def load_config() -> dict:
+    if not CONFIG_PATH.exists():
+        fail("haxelib.json not found")
+
+    return read_json_file(CONFIG_PATH)
 
 
 def github_api_get(path: str) -> dict:
@@ -121,7 +119,7 @@ def normalize_tags(tags) -> list[str]:
         return []
 
     if not isinstance(tags, list):
-        fail("tags must be a YAML array or GitHub topics array")
+        fail("tags must be a JSON array or GitHub topics array")
 
     result = []
     for tag in tags:
@@ -132,12 +130,33 @@ def normalize_tags(tags) -> list[str]:
     return result
 
 
+def normalize_contributors(contributors) -> list[str]:
+    if contributors is None:
+        return []
+
+    if not isinstance(contributors, list):
+        fail("contributors must be a JSON array")
+
+    result = []
+    for contributor in contributors:
+        value = str(contributor).strip()
+        if value:
+            result.append(value)
+
+    return result
+
+
 def normalize_dependencies(dependencies) -> dict:
     if dependencies is None:
         return {}
 
+    if isinstance(dependencies, list):
+        if len(dependencies) == 0:
+            return {}
+        fail("dependencies must be a JSON object; use {} for no dependencies")
+
     if not isinstance(dependencies, dict):
-        fail("dependencies must be a YAML object")
+        fail("dependencies must be a JSON object")
 
     return {
         str(name): "" if version is None else str(version)
@@ -146,7 +165,7 @@ def normalize_dependencies(dependencies) -> dict:
 
 
 def main() -> None:
-    config = load_yaml()
+    config = load_config()
     release = get_release_payload()
 
     repo_data = github_api_get("")
@@ -170,13 +189,13 @@ def main() -> None:
     if not haxelib_license:
         fail(
             f"Cannot map GitHub license {spdx_license!r} to haxelib license. "
-            "Set license explicitly in haxelib.yml."
+            "Set license explicitly in haxelib.json."
         )
 
     if not release_body.strip():
         fail("GitHub Release body is empty. Fill release notes before publishing.")
 
-    package = {
+    generated_package = {
         "name": normalize_name(config.get("name") or repo_name),
         "url": str(config.get("url") or repo_url),
         "license": str(haxelib_license),
@@ -185,21 +204,32 @@ def main() -> None:
         "version": str(config.get("version") or normalize_version(release_tag)),
         "classPath": str(config.get("classPath", "src")),
         "releasenote": str(config.get("releasenote") or release_body.strip()),
-        "contributors": config.get("contributors") or [],
+        "contributors": normalize_contributors(config.get("contributors")),
     }
 
+    package = dict(generated_package)
+    package.update(config)
+
+    package["name"] = normalize_name(package.get("name") or repo_name)
+    package["url"] = str(package.get("url") or repo_url)
+    package["license"] = str(package.get("license") or haxelib_license)
+    package["tags"] = normalize_tags(package.get("tags", repo_topics))
+    package["description"] = str(package.get("description") or repo_description)
+    package["version"] = str(package.get("version") or normalize_version(release_tag))
+    package["classPath"] = str(package.get("classPath", "src"))
+    package["releasenote"] = str(package.get("releasenote") or release_body.strip())
+    package["contributors"] = normalize_contributors(package.get("contributors"))
+
     if not package["description"]:
-        fail("Description is empty. Add GitHub repo description or description in haxelib.yml.")
+        fail("Description is empty. Add GitHub repo description or description in haxelib.json.")
 
     if not package["contributors"]:
-        fail("contributors is required. Add contributors to haxelib.yml.")
+        fail("contributors is required. Add contributors to haxelib.json.")
 
-    dependencies = normalize_dependencies(config.get("dependencies"))
-    if dependencies:
-        package["dependencies"] = dependencies
+    package["dependencies"] = normalize_dependencies(package.get("dependencies"))
 
-    if "main" in config and config["main"]:
-        package["main"] = str(config["main"])
+    if "main" in package and package["main"] is not None:
+        package["main"] = str(package["main"])
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 

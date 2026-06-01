@@ -7,13 +7,13 @@ Minimal template for publishing a Haxe library to haxelib through GitHub Release
 - `src/` for library source code
 - `tests/` for lightweight test entry points
 - `run/Main.hx` as the CLI entry point for `haxelib run`
-- `haxelib.yml` as the editable source of package metadata
+- `haxelib.json` as the editable source of package metadata and field overrides
 - `.github/scripts/generate_haxelib_json.py` to build `package/haxelib.json`
 - `.github/workflows/publish-haxelib.yml` to publish on release
 
 ## Intended workflow
 
-1. Rename the project and set the real package name in `haxelib.yml`.
+1. Rename the project and set the real package name in `haxelib.json`.
 2. Replace placeholder values such as `AUTHOR_NAME`.
 3. Add your library code under `src/`.
 4. Update tests in `tests/` so they compile against the real library.
@@ -22,7 +22,7 @@ Minimal template for publishing a Haxe library to haxelib through GitHub Release
 
 ## Required setup
 
-Update `haxelib.yml`:
+Update `haxelib.json`:
 
 - `name`
 - `contributors`
@@ -51,7 +51,7 @@ haxe -cp . -cp src --main run.Main --interp
 
 ## Current placeholders to replace
 
-- `haxelib.yml` still contains `AUTHOR_NAME`
+- `haxelib.json` still contains `AUTHOR_NAME`
 - `run/Main.hx`, `src/Library.hx`, and `tests/Main.hx` are empty stubs
 
 ## Project layout
@@ -71,7 +71,7 @@ This directory contains the public library source that will be shipped to haxeli
 
 This directory contains the CLI entry point used by `haxelib run <libraryname>`.
 
-- `run/Main.hx` must stay compatible with `main: "run.Main"` in `haxelib.yml`.
+- `run/Main.hx` must stay compatible with `main: "run.Main"` in `haxelib.json`.
 - Keep command-line bootstrap logic here instead of mixing it into the library source tree.
 
 ### `tests/`
@@ -96,12 +96,12 @@ The release workflow:
 1. Checks out the published Git tag
 2. Installs Haxe and Python dependencies
 3. Copies `src/`, `run/`, `README.md`, `LICENSE`, and optional `CHANGELOG.md` into `package/`
-4. Generates `package/haxelib.json` from `haxelib.yml`, repository metadata, and the release body
+4. Generates `package/haxelib.json` from `haxelib.json`, repository metadata, and the release body
 5. Publishes `package/` with `haxelib submit`
 
 ## Notes
 
-- Release notes must not be empty, because they become `releasenote` in `haxelib.json`.
-- Repository topics are used as package tags when `tags` are not set in `haxelib.yml`.
+- Release notes must not be empty, because they become `releasenote` in `package/haxelib.json` unless you override that field in `haxelib.json`.
+- Repository topics are used as package tags when `tags` are not set in `haxelib.json`.
 - The generated package version comes from the Git tag unless `version` is set manually.
 - `main: "run.Main"` is the package entry point used for `haxelib run <libraryname>`.

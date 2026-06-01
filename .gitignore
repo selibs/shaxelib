@@ -3,5 +3,4 @@
 dump/
 
 package/
-haxelib.json
 .env

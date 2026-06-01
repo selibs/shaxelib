@@ -1,0 +1,6 @@
+{
+  "classPath": "src",
+  "main": "run.Main",
+  "contributors": ["AUTHOR_NAME"],
+  "dependencies": []
+}
